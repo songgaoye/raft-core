@@ -4,8 +4,8 @@
 
 namespace raft_core {
 
-Ballot::Ballot(const ClusterConfig& current_config, const ClusterConfig* old_config)
-    : current_pending_(current_config.peers()), current_required_(majority_for(current_config)) {
+Ballot::Ballot(const ClusterConfig& new_config, const ClusterConfig* old_config)
+    : new_pending_(new_config.peers()), new_required_(majority_for(new_config)) {
   if (old_config != nullptr) {
     old_pending_ = old_config->peers();
     old_required_ = majority_for(*old_config);
@@ -14,8 +14,8 @@ Ballot::Ballot(const ClusterConfig& current_config, const ClusterConfig* old_con
 }
 
 void Ballot::grant(PeerId peer) {
-  if (erase_pending(&current_pending_, peer)) {
-    ++current_granted_;
+  if (erase_pending(&new_pending_, peer)) {
+    ++new_granted_;
   }
 
   if (old_pending_ != std::nullopt && erase_pending(&*old_pending_, peer)) {
@@ -24,7 +24,7 @@ void Ballot::grant(PeerId peer) {
 }
 
 bool Ballot::granted() const noexcept {
-  if (current_granted_ < current_required_) {
+  if (new_granted_ < new_required_) {
     return false;
   }
 
